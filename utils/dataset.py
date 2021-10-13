@@ -427,10 +427,11 @@ class NABirds(Dataset):
                puts it in root directory. If dataset is already downloaded, it is not
                downloaded again.
     """
-    base_folder = 'nabirds/images'
+    base_folder = 'images'
 
     def __init__(self, root, train=True, transform=None):
-        dataset_path = os.path.join(root, 'nabirds')
+        dataset_path = os.path.join(root, 'nabirds')        
+        dataset_path = root
         self.root = root
         self.loader = default_loader
         self.train = train
