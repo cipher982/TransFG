@@ -3,3 +3,5 @@ data/
 logs/
 cuda*
 __pycache__
+wandb/
+output/

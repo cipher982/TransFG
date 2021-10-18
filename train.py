@@ -57,9 +57,9 @@ def reduce_mean(tensor, nprocs):
     return rt
 
 
-def save_model(args, model):
+def save_model(args, model, acc):
     model_to_save = model.module if hasattr(model, "module") else model
-    model_checkpoint = os.path.join(args.output_dir, "%s_checkpoint.bin" % args.name)
+    model_checkpoint = os.path.join(args.output_dir, f"{args.name}_ckpt_{acc}.bin")
     if args.fp16:
         checkpoint = {"model": model_to_save.state_dict(), "amp": amp.state_dict()}
     else:
@@ -248,7 +248,7 @@ def train(args, model):
         )
         all_preds, all_label = [], []
         for step, batch in enumerate(epoch_iterator):
-            print(f"Step: {step}/{args.num_steps}")
+            # print(f"Step: {step}/{args.num_steps}")
             batch = tuple(t.to(args.device) for t in batch)
             x, y = batch
 
@@ -309,7 +309,7 @@ def train(args, model):
                         accuracy = valid(args, model, writer, test_loader, global_step)
                     if args.local_rank in [-1, 0]:
                         if best_acc < accuracy:
-                            save_model(args, model)
+                            save_model(args, model, accuracy)
                             best_acc = accuracy
                         logger.info("best accuracy so far: %f" % best_acc)
                     model.train()
@@ -320,6 +320,7 @@ def train(args, model):
         all_preds, all_label = all_preds[0], all_label[0]
         accuracy = simple_accuracy(all_preds, all_label)
         wandb.log({"accuracy": accuracy})
+        save_model(args, model, accuracy)
         accuracy = torch.tensor(accuracy).to(args.device)
         dist.barrier()
         train_accuracy = reduce_mean(accuracy, args.nprocs)
